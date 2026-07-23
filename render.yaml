@@ -11,7 +11,7 @@ services:
         value: production
       - key: BACKEND_CORS_ORIGINS
         value: https://cashapps-pay.vercel.app
-      - key: BACKEND_DATABASE_PATH
-        value: /var/data/cash_app.db
       - key: BACKEND_SECRET_KEY
         generateValue: true
+      - key: DATABASE_URL
+        sync: false

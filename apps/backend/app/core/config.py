@@ -10,6 +10,7 @@ class Settings(BaseSettings):
         default="http://localhost:5173,http://127.0.0.1:5173",
         alias="BACKEND_CORS_ORIGINS",
     )
+    database_url: str = Field(default="", alias="DATABASE_URL")
     database_path: str = Field(default="cash_app.db", alias="BACKEND_DATABASE_PATH")
     log_level: str = Field(default="info", alias="BACKEND_LOG_LEVEL")
     secret_key: str = Field(default="change-this-secret-in-production", alias="BACKEND_SECRET_KEY")

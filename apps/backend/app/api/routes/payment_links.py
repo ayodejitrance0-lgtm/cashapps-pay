@@ -1,14 +1,13 @@
-import sqlite3
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from app.api.routes.auth import CurrentUser, get_current_user
-from app.core.database import database_session
+from app.core.database import DatabaseConnection, database_session, execute, fetch_one
 
 router = APIRouter(prefix="/payment-link", tags=["payment-link"])
-DatabaseConnection = Annotated[sqlite3.Connection, Depends(database_session)]
+DatabaseSession = Annotated[DatabaseConnection, Depends(database_session)]
 AuthenticatedUser = Annotated[CurrentUser, Depends(get_current_user)]
 
 
@@ -26,16 +25,17 @@ class PaymentLinkResponse(PaymentLinkPayload):
 @router.get("", response_model=PaymentLinkResponse)
 def read_payment_link(
     current_user: AuthenticatedUser,
-    connection: DatabaseConnection,
+    connection: DatabaseSession,
 ) -> PaymentLinkResponse:
-    row = connection.execute(
+    row = fetch_one(
+        connection,
         """
         SELECT full_name, cashtag, wallet_name, lightning_invoice, updated_at
         FROM payment_links
         WHERE user_id = ?
         """,
         (current_user.id,),
-    ).fetchone()
+    )
 
     if row is None:
         return PaymentLinkResponse()
@@ -53,9 +53,10 @@ def read_payment_link(
 def update_payment_link(
     payload: PaymentLinkPayload,
     current_user: AuthenticatedUser,
-    connection: DatabaseConnection,
+    connection: DatabaseSession,
 ) -> PaymentLinkResponse:
-    connection.execute(
+    execute(
+        connection,
         """
         INSERT INTO payment_links (
             user_id, full_name, cashtag, wallet_name, lightning_invoice, updated_at

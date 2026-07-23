@@ -1,10 +1,16 @@
-import sqlite3
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
 
-from app.core.database import database_session
+from app.core.database import (
+    DatabaseConnection,
+    database_session,
+    execute,
+    fetch_one,
+    insert_user,
+    is_unique_error,
+)
 from app.core.security import (
     create_access_token,
     decode_access_token,
@@ -13,7 +19,7 @@ from app.core.security import (
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-DatabaseConnection = Annotated[sqlite3.Connection, Depends(database_session)]
+DatabaseSession = Annotated[DatabaseConnection, Depends(database_session)]
 AuthorizationHeader = Annotated[str | None, Header()]
 
 
@@ -43,7 +49,7 @@ class CurrentUser(BaseModel):
 
 def get_current_user(
     authorization: AuthorizationHeader = None,
-    connection: DatabaseConnection = None,
+    connection: DatabaseSession = None,
 ) -> CurrentUser:
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(
@@ -54,10 +60,11 @@ def get_current_user(
     token = authorization.split(" ", 1)[1]
     payload = decode_access_token(token)
     user_id = int(payload["sub"])
-    row = connection.execute(
+    row = fetch_one(
+        connection,
         "SELECT id, email FROM users WHERE id = ?",
         (user_id,),
-    ).fetchone()
+    )
 
     if row is None:
         raise HTTPException(
@@ -69,17 +76,15 @@ def get_current_user(
 
 
 @router.post("/signup", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
-def signup(payload: AuthRequest, connection: DatabaseConnection) -> AuthResponse:
+def signup(payload: AuthRequest, connection: DatabaseSession) -> AuthResponse:
     password_hash, salt = hash_password(payload.password)
 
     try:
-        cursor = connection.execute(
-            "INSERT INTO users (email, password_hash, salt) VALUES (?, ?, ?)",
-            (payload.email.lower(), password_hash, salt),
-        )
-        user_id = cursor.lastrowid
-        connection.execute("INSERT INTO payment_links (user_id) VALUES (?)", (user_id,))
-    except sqlite3.IntegrityError as exc:
+        user_id = insert_user(connection, payload.email.lower(), password_hash, salt)
+        execute(connection, "INSERT INTO payment_links (user_id) VALUES (?)", (user_id,))
+    except Exception as exc:
+        if not is_unique_error(exc):
+            raise
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An account already exists. Sign in instead.",
@@ -90,11 +95,12 @@ def signup(payload: AuthRequest, connection: DatabaseConnection) -> AuthResponse
 
 
 @router.post("/signin", response_model=AuthResponse)
-def signin(payload: AuthRequest, connection: DatabaseConnection) -> AuthResponse:
-    row = connection.execute(
+def signin(payload: AuthRequest, connection: DatabaseSession) -> AuthResponse:
+    row = fetch_one(
+        connection,
         "SELECT id, email, password_hash, salt FROM users WHERE email = ?",
         (payload.email.lower(),),
-    ).fetchone()
+    )
 
     if row is None or not verify_password(payload.password, row["password_hash"], row["salt"]):
         raise HTTPException(
