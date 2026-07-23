@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.db
+
+# Build output
+dist/
+build/
+.vite/
+*.tsbuildinfo
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local runtime artifacts
+tmp/
+
+.vercel

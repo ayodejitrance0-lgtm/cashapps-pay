@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: cashapps-pay-backend
+    runtime: python
+    rootDir: apps/backend
+    buildCommand: pip install -e .
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: BACKEND_CORS_ORIGINS
+        value: https://cashapps-pay.vercel.app
+      - key: BACKEND_DATABASE_PATH
+        value: /var/data/cash_app.db
+      - key: BACKEND_SECRET_KEY
+        generateValue: true

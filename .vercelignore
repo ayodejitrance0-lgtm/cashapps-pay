@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+node_modules
+apps/backend/*.db
+apps/backend/**/*.db
+tmp
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.git

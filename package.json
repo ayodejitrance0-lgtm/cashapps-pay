@@ -1,0 +1,32 @@
+{
+  "name": "cash-app-payment-link",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/frontend"
+  ],
+  "scripts": {
+    "dev": "docker compose up --build",
+    "dev:frontend": "npm run dev --workspace @cash-app/frontend",
+    "dev:backend": "cd apps/backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "build": "npm run build --workspace @cash-app/frontend",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:backend": "cd apps/backend && pytest",
+    "typecheck": "npm run typecheck --workspace @cash-app/frontend"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.0",
+    "eslint": "^9.30.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.2.0",
+    "prettier": "^3.6.0",
+    "typescript-eslint": "^8.35.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
