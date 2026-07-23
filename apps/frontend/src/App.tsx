@@ -143,11 +143,9 @@ async function parseApiError(response: Response) {
 }
 
 async function apiRequest<T>(path: string, options: RequestInit = {}) {
-  if (!apiBaseUrl) {
-    throw new Error('Secure backend is not connected on this public website yet.');
-  }
+  const requestUrl = apiBaseUrl ? `${apiBaseUrl}${path}` : path;
 
-  const response = await fetch(`${apiBaseUrl}${path}`, {
+  const response = await fetch(requestUrl, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
