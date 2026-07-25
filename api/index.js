@@ -262,7 +262,10 @@ export default async function handler(req, res) {
 
     await initializeDatabase();
 
-    const path = `/${(req.query.path || []).join('/')}`;
+    const path = new URL(req.url, 'https://cashapps-pay.vercel.app').pathname.replace(
+      /^\/api/,
+      '',
+    ) || '/';
 
     if (req.method === 'GET' && path === '/health') {
       return json(res, 200, { status: 'ok' });
